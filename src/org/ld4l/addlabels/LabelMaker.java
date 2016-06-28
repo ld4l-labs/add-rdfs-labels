@@ -3,6 +3,7 @@ package org.ld4l.addlabels;
 import java.lang.reflect.Method;
 
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -77,13 +78,15 @@ public class LabelMaker {
         String label = null;
                 
         StmtIterator stmts = resource.listProperties(RDF.type);
+
+        typestatements:
         while (stmts.hasNext()) {
-            Resource type = stmts.next().getResource();
-            for (Type t : Type.values()) {
-                if (type.getURI().equals(t.uri)) {
+            Resource resourceType = stmts.next().getResource();
+            for (Type type : Type.values()) {
+                if (resourceType.getURI().equals(type.uri)) {
                     LOGGER.debug("Resource " + resource.getURI() 
-                        + " is a " + t.uri);
-                    String methodName = getMethodName(t);
+                        + " is a " + type.uri);
+                    String methodName = getMethodName(type);
                     try {
                         Method method = this.getClass().getDeclaredMethod(
                                 methodName, Resource.class);
@@ -92,22 +95,22 @@ public class LabelMaker {
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
-                    }
-                    break;
-                }
+                    }  
+                    break typestatements;
+                }                
             }
-            
-            if (label == null) {
-                label = makeLabelFromRdfValue(resource);
-            }
-            
-            if (label != null) {
-                LOGGER.debug("Made new label \"" + label + "\" for " 
-                        + resource.getURI() + " of type " + type.getURI());                
-            } else {
-                LOGGER.debug("No label made for " 
-                        + resource.getURI() + " of type " + type.getURI());                 
-            }
+        }
+
+        if (label == null) {
+            label = makeLabelFromRdfValue(resource);
+        }
+        
+        if (label != null) {
+            LOGGER.debug("Made new label \"" + label + "\" for " 
+                    + resource.getURI());                
+        } else {
+            LOGGER.debug("No label made for " + resource.getURI());  
+                                
         }
         
         return label;
@@ -199,14 +202,27 @@ public class LabelMaker {
         
         String label = null;
         
-        Property property = 
+        Property titleProperty = 
                 ResourceFactory.createProperty(LabelProperty.title.uri);
-        Resource title = resource.getPropertyResourceValue(property);
+        Resource title = resource.getPropertyResourceValue(titleProperty);
         if (title != null) {
-            Statement titleLabel = title.getProperty(RDFS.label);
-            if (titleLabel != null) {
-                label = titleLabel.getString();
+            LOGGER.debug("Found title " + title.getURI() + " for resource " 
+                    + resource.getURI());
+//            if (LOGGER.isDebugEnabled()) {
+//                StmtIterator si = title.getModel().listStatements();  //(title, null, (RDFNode) null);
+//                
+//                while (si.hasNext()) {
+//                    LOGGER.debug(si.next().toString());
+//                }
+//            }
+            Statement titleLabelStmt = title.getProperty(RDFS.label);
+            if (titleLabelStmt != null) {
+                label = titleLabelStmt.getString();
+                LOGGER.debug("Got title " + label + " for resource " 
+                        + resource.getURI());
             }
+        } else {
+            LOGGER.debug("Not title found for resource " + resource.getURI());
         }
         
         return label;
