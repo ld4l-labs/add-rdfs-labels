@@ -119,7 +119,7 @@ public class LabelMaker {
                         e.printStackTrace();
                     }  
                     // Don't look at any other types for this resource (for
-                    // example, don't look at ld4l:Text for an ld4l:Work).
+                    // example, don't look at ld4l:Text type for an ld4l:Work).
                     break typestatements;
                 }                
             }
@@ -226,19 +226,7 @@ public class LabelMaker {
         if (title != null) {
             LOGGER.debug("Found title " + title.getURI() + " for resource " 
                     + resource.getURI());
-//            if (LOGGER.isDebugEnabled()) {
-//                StmtIterator si = title.getModel().listStatements();  //(title, null, (RDFNode) null);
-//                
-//                while (si.hasNext()) {
-//                    LOGGER.debug(si.next().toString());
-//                }
-//            }
-            Statement titleLabelStmt = title.getProperty(RDFS.label);
-            if (titleLabelStmt != null) {
-                label = titleLabelStmt.getString();
-                LOGGER.debug("Got title " + label + " for resource " 
-                        + resource.getURI());
-            }
+            label = makeLabelFromDatatypeProperty(title, RDFS.label);
         } else {
             LOGGER.debug("Not title found for resource " + resource.getURI());
         }
