@@ -3,7 +3,6 @@ package org.ld4l.addlabels;
 import java.lang.reflect.Method;
 
 import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -75,8 +74,29 @@ public class LabelMaker {
     
     String makeLabel(Resource resource) {
         
-        String label = null;
+        String label = makeLabelFromType(resource);
                 
+
+
+        if (label == null) {
+            label = makeLabelFromRdfValue(resource);
+        }
+        
+        if (label != null) {
+            LOGGER.debug("Made new label \"" + label + "\" for " 
+                    + resource.getURI());                
+        } else {
+            LOGGER.debug("No label made for " + resource.getURI());  
+                                
+        }
+        
+        return label;
+    }
+    
+    private String makeLabelFromType(Resource resource) {
+
+        String label = null;
+        
         StmtIterator stmts = resource.listProperties(RDF.type);
 
         typestatements:
@@ -96,24 +116,15 @@ public class LabelMaker {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }  
+                    // Don't look at any other types for this resource (for
+                    // example, don't look at ld4l:Text for an ld4l:Work).
                     break typestatements;
                 }                
             }
         }
-
-        if (label == null) {
-            label = makeLabelFromRdfValue(resource);
-        }
-        
-        if (label != null) {
-            LOGGER.debug("Made new label \"" + label + "\" for " 
-                    + resource.getURI());                
-        } else {
-            LOGGER.debug("No label made for " + resource.getURI());  
-                                
-        }
         
         return label;
+        
     }
 
     private String getMethodName(Type type) {
