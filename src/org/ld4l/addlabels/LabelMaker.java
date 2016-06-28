@@ -207,10 +207,16 @@ public class LabelMaker {
             Resource resource, Property property) {
 
         String label = null;
-        
+        LOGGER.debug("Looking for property " + property + " of resource " 
+                + resource.getURI());
         Statement stmt = resource.getProperty(property);
         if (stmt != null) {
             label = stmt.getString();
+            LOGGER.debug("Found value " + label + " of property " + property 
+                    + " for resource " + resource.getURI());
+        } else {
+            LOGGER.debug("No value found for property " + property 
+                    + " and resource " + resource.getURI());
         }
         
         return label;
