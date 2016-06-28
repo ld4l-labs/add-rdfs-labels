@@ -22,6 +22,7 @@ public class LabelMaker {
         ld4l("http://bib.ld4l.org/ontology/"),
         lingvo("http://www.lingvoj.org/ontology#"),
         madsrdf("http://www.loc.gov/mads/rdf/v1#"),
+        prov("http://www.w3.org/ns/prov#"),
         rdf("http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
         skos("http://www.w3.org/2004/02/skos/core#");
         
@@ -42,6 +43,7 @@ public class LabelMaker {
         agent(Namespace.foaf, "Agent"),
         authority(Namespace.madsrdf, "Authority"), 
         topic(Namespace.ld4l, "Topic"),
+        location(Namespace.prov, "Location"),
         language(Namespace.lingvo, "Lingvo");
         
         private final String uri;
@@ -157,6 +159,11 @@ public class LabelMaker {
     
     @SuppressWarnings("unused")
     private String makeAgentLabel(Resource resource) {
+        return makeLabelFromFoafName(resource);
+    }
+    
+    @SuppressWarnings("unused")
+    private String makeLocationLabel(Resource resource) {
         return makeLabelFromFoafName(resource);
     }
 
