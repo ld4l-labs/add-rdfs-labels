@@ -58,7 +58,7 @@ public class Labeller {
 
         Model model = readModelFromFile(file.toString());        
         Model labels = getLabels(model);
-        LOGGER.debug(labels);
+        // LOGGER.debug(labels);
         model = model.add(labels);
   
         String basename = FilenameUtils.getBaseName(file.toString());
@@ -73,7 +73,8 @@ public class Labeller {
         ResIterator subjects = model.listSubjects();
 
         int subjectCount = 0;
-        int labelCount = 0;
+        int existingLabel = 0;
+        int noLabelMade = 0;
         
         while (subjects.hasNext()) {
             Resource subject = subjects.nextResource();
@@ -82,26 +83,27 @@ public class Labeller {
             LOGGER.debug("Got subject " + subjectUri);
             
             Statement labelStmt = subject.getProperty(RDFS.label);
+            
             // If the resource doesn't already have a label
             if (labelStmt == null) {
                 LOGGER.debug("Getting label for subject " + subjectUri);
                 String label = labelMaker.makeLabel(subject);
                 if (label != null) {
-                    LOGGER.debug("Made new label " + label + " for " 
-                            + subjectUri);
                     assertions.add(subject, RDFS.label, label);    
+                } else {
+                    noLabelMade++;
                 }
             } else {
-                LOGGER.debug("Subject " + subjectUri
-                        + " already has label " + labelStmt.getString());
-                labelCount++;
-            }
-            
+                LOGGER.debug("Subject " + subjectUri + " already has label \"" 
+                        + labelStmt.getString() + "\"");
+                existingLabel++;
+            }            
         }  
         
         LOGGER.info("Processed " + subjectCount + " distinct resources.");
-        LOGGER.info("Found " + labelCount + " resources with existing labels.");
+        LOGGER.info("Found " + existingLabel + " resources with existing labels.");
         LOGGER.info("Made " + assertions.size() + " new labels.");
+        LOGGER.info("No label created for " + noLabelMade + " resources.");
         return assertions;
     }
 

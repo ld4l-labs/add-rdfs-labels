@@ -1,11 +1,14 @@
 package org.ld4l.addlabels;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,7 +21,9 @@ public class LabelMaker {
         foaf("http://xmlns.com/foaf/0.1/"),
         ld4l("http://bib.ld4l.org/ontology/"),
         lingvo("http://www.lingvoj.org/ontology#"),
-        madsrdf("http://www.loc.gov/mads/rdf/v1#");
+        madsrdf("http://www.loc.gov/mads/rdf/v1#"),
+        rdf("http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
+        skos("http://www.w3.org/2004/02/skos/core#");
         
         private final String uri;
         
@@ -31,7 +36,7 @@ public class LabelMaker {
         // Order is crucial!
         work(Namespace.ld4l, "Work"),
         instance(Namespace.ld4l, "Instance"),
-        item(Namespace.ld4l, "Item"),
+        //item(Namespace.ld4l, "Item"),
         person(Namespace.foaf, "Person"),
         organization(Namespace.foaf, "Organization"),
         agent(Namespace.foaf, "Agent"),
@@ -44,6 +49,21 @@ public class LabelMaker {
         
         Type(Namespace namespace, String localname) {
             this.localname = localname;
+            uri = namespace.uri + localname;
+        }
+    }
+    
+    private static enum LabelProperty {
+        authLabel(Namespace.madsrdf, "authoritativeLabel"),
+        name(Namespace.foaf, "name"),
+        prefLabel(Namespace.skos, "prefLabel"),
+        title(Namespace.ld4l, "hasTitle"),
+        type(Namespace.rdf, "type"),
+        value(Namespace.rdf, "value");
+        
+        private final String uri;
+        
+        LabelProperty(Namespace namespace, String localname) {
             uri = namespace.uri + localname;
         }
     }
@@ -62,7 +82,7 @@ public class LabelMaker {
             for (Type t : Type.values()) {
                 if (type.getURI().equals(t.uri)) {
                     LOGGER.debug("Resource " + resource.getURI() 
-                        + " is of type " + t.uri);
+                        + " is a " + t.uri);
                     String methodName = getMethodName(t);
                     try {
                         Method method = this.getClass().getDeclaredMethod(
@@ -78,52 +98,138 @@ public class LabelMaker {
             }
             
             if (label == null) {
-                // assign rdf:value if exists
-                label = resource.getLocalName();
+                label = makeLabelFromRdfValue(resource);
+            }
+            
+            if (label != null) {
+                LOGGER.debug("Made new label \"" + label + "\" for " 
+                        + resource.getURI() + " of type " + type.getURI());                
+            } else {
+                LOGGER.debug("No label made for " 
+                        + resource.getURI() + " of type " + type.getURI());                 
+            }
+        }
+        
+        return label;
+    }
+
+    private String getMethodName(Type type) {
+        return "make" + type.localname + "Label";
+    }
+    
+    @SuppressWarnings("unused")
+    private String makeWorkLabel(Resource resource) {
+        return makeLabelFromTitle(resource);
+    }
+    
+    @SuppressWarnings("unused")
+    private String makeInstanceLabel(Resource resource) {
+        return makeLabelFromTitle(resource);
+    }
+    
+//    private String makeItemLabel(Resource resource) {
+//        return "item label";
+//    }
+    
+    @SuppressWarnings("unused")
+    private String makePersonLabel(Resource resource) {
+        return makeLabelFromFoafName(resource);
+    }
+    
+    @SuppressWarnings("unused")
+    private String makeOrganizationLabel(Resource resource) {
+        return makeLabelFromFoafName(resource);
+    }
+    
+    @SuppressWarnings("unused")
+    private String makeAgentLabel(Resource resource) {
+        return makeLabelFromFoafName(resource);
+    }
+
+    @SuppressWarnings("unused")
+    private String makeAuthorityLabel(Resource resource) {
+        return makeLabelFromDatatypeProperty(resource, LabelProperty.authLabel);
+    }
+
+//    @SuppressWarnings("unused")
+//    private String makeLanguageLabel(Resource resource) {
+//        return "lang label";
+//    }
+
+    @SuppressWarnings("unused")
+    private String makeTopicLabel(Resource resource) {
+        
+        String label = null;
+        
+        label = makeLabelFromDatatypeProperty(
+                resource, LabelProperty.prefLabel);
+        
+        if (label == null) {
+            LOGGER.debug("FOUND TOPIC WITH NO skos:prefLabel");
+        }   
+        
+        return label;
+    }
+        
+    private String makeLabelFromFoafName(Resource resource) {        
+        return makeLabelFromDatatypeProperty(resource, LabelProperty.name);
+    }
+    
+    private String makeLabelFromDatatypeProperty(
+            Resource resource, LabelProperty labelProperty) {
+
+        Property property = ResourceFactory.createProperty(labelProperty.uri);
+        return makeLabelFromDatatypeProperty(resource, property);       
+    }
+
+    private String makeLabelFromDatatypeProperty(
+            Resource resource, Property property) {
+
+        String label = null;
+        
+        Statement stmt = resource.getProperty(property);
+        if (stmt != null) {
+            label = stmt.getString();
+        }
+        
+        return label;
+        
+    }    
+    private String makeLabelFromTitle(Resource resource) {
+        
+        String label = null;
+        
+        Property property = 
+                ResourceFactory.createProperty(LabelProperty.title.uri);
+        Resource title = resource.getPropertyResourceValue(property);
+        if (title != null) {
+            Statement titleLabel = title.getProperty(RDFS.label);
+            if (titleLabel != null) {
+                label = titleLabel.getString();
             }
         }
         
         return label;
     }
     
-    private String makeWorkLabel(Resource resource) {
-        return "work label";
-    }
-    
-    private String makeInstanceLabel(Resource resource) {
-        return "instance label";
-    }
-    
-    private String makeItemLabel(Resource resource) {
-        return "item label";
-    }
-    
-    private String makePersonLabel(Resource resource) {
-        return "person label";
-    }
-    
-    private String makeOrganizationLabel(Resource resource) {
-        return "org label";
-    }
-    
-    private String makeAgentLabel(Resource resource) {
-        return "agent label";
-    }
-    
-    private String makeAuthorityLabel(Resource resource) {
-        return "auth label";
-    }
-    
-    private String makeLanguageLabel(Resource resource) {
-        return "lang label";
-    }
-    
-    private String makeTopicLabel(Resource resource) {
-        return "topic label";
-    }
-    
-    private String getMethodName(Type type) {
-        return "make" + type.localname + "Label";
+    private String makeLabelFromRdfValue(Resource resource) {
+
+        String label = null;
+        
+        String value = 
+                makeLabelFromDatatypeProperty(resource, LabelProperty.value);
+        
+        if (value != null) {
+            label = value;
+            Resource type = resource.getPropertyResourceValue(RDF.type);
+            if (type != null) {               
+                String typeLocalName = type.getLocalName().replaceAll(
+                        "([a-z])([A-Z])", "$1 $2");
+                label = label + " (" + typeLocalName + ")";
+            }           
+        }
+                
+        return label;        
     }
 
 }
