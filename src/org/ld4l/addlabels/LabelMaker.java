@@ -2,7 +2,10 @@ package org.ld4l.addlabels;
 
 import java.lang.reflect.Method;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
@@ -37,14 +40,12 @@ public class LabelMaker {
         // Order is crucial!
         work(Namespace.ld4l, "Work"),
         instance(Namespace.ld4l, "Instance"),
-        //item(Namespace.ld4l, "Item"),
         person(Namespace.foaf, "Person"),
         organization(Namespace.foaf, "Organization"),
         agent(Namespace.foaf, "Agent"),
         authority(Namespace.madsrdf, "Authority"), 
         topic(Namespace.ld4l, "Topic"),
-        location(Namespace.prov, "Location"),
-        language(Namespace.lingvo, "Lingvo");
+        location(Namespace.prov, "Location");
         
         private final String uri;
         private final String localname;
@@ -76,19 +77,17 @@ public class LabelMaker {
     
     String makeLabel(Resource resource) {
         
-        String label = makeLabelFromType(resource);
-                
-
+        String label = makeLabelFromType(resource);               
 
         if (label == null) {
             label = makeLabelFromRdfValue(resource);
         }
         
         if (label != null) {
-            LOGGER.debug("Made new label \"" + label + "\" for " 
+            LOGGER.trace("Made new label \"" + label + "\" for " 
                     + resource.getURI());                
         } else {
-            LOGGER.debug("No label made for " + resource.getURI());  
+            LOGGER.trace("No label made for " + resource.getURI());  
                                 
         }
         
@@ -106,13 +105,13 @@ public class LabelMaker {
             Resource resourceType = stmts.next().getResource();
             for (Type type : Type.values()) {
                 if (resourceType.getURI().equals(type.uri)) {
-                    LOGGER.debug("Resource " + resource.getURI() 
+                    LOGGER.trace("Resource " + resource.getURI() 
                         + " is a " + type.uri);
                     String methodName = getMethodName(type);
                     try {
                         Method method = this.getClass().getDeclaredMethod(
                                 methodName, Resource.class);
-                        LOGGER.debug("Got method " + method.getName());
+                        LOGGER.trace("Got method " + method.getName());
                         label = (String) method.invoke(this, resource);
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
@@ -143,10 +142,6 @@ public class LabelMaker {
         return makeLabelFromTitle(resource);
     }
     
-//    private String makeItemLabel(Resource resource) {
-//        return "item label";
-//    }
-    
     @SuppressWarnings("unused")
     private String makePersonLabel(Resource resource) {
         return makeLabelFromFoafName(resource);
@@ -172,11 +167,6 @@ public class LabelMaker {
         return makeLabelFromDatatypeProperty(resource, LabelProperty.authLabel);
     }
 
-//    @SuppressWarnings("unused")
-//    private String makeLanguageLabel(Resource resource) {
-//        return "lang label";
-//    }
-
     @SuppressWarnings("unused")
     private String makeTopicLabel(Resource resource) {
         
@@ -186,7 +176,7 @@ public class LabelMaker {
                 resource, LabelProperty.prefLabel);
         
         if (label == null) {
-            LOGGER.debug("FOUND TOPIC WITH NO skos:prefLabel");
+            LOGGER.warn("FOUND TOPIC WITH NO skos:prefLabel");
         }   
         
         return label;
@@ -207,15 +197,15 @@ public class LabelMaker {
             Resource resource, Property property) {
 
         String label = null;
-        LOGGER.debug("Looking for property " + property + " of resource " 
+        LOGGER.trace("Looking for property " + property + " of resource " 
                 + resource.getURI());
         Statement stmt = resource.getProperty(property);
         if (stmt != null) {
             label = stmt.getString();
-            LOGGER.debug("Found value " + label + " of property " + property 
+            LOGGER.trace("Found value " + label + " of property " + property 
                     + " for resource " + resource.getURI());
         } else {
-            LOGGER.debug("No value found for property " + property 
+            LOGGER.trace("No value found for property " + property 
                     + " and resource " + resource.getURI());
         }
         
@@ -230,11 +220,12 @@ public class LabelMaker {
                 ResourceFactory.createProperty(LabelProperty.title.uri);
         Resource title = resource.getPropertyResourceValue(titleProperty);
         if (title != null) {
-            LOGGER.debug("Found title " + title.getURI() + " for resource " 
+            LOGGER.trace("Found title " + title.getURI() + " for resource " 
                     + resource.getURI());
+            LOGGER.trace("Resource model" + resource.getModel().toString());
             label = makeLabelFromDatatypeProperty(title, RDFS.label);
         } else {
-            LOGGER.debug("Not title found for resource " + resource.getURI());
+            LOGGER.trace("Not title found for resource " + resource.getURI());
         }
         
         return label;
