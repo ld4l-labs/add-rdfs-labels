@@ -233,22 +233,24 @@ public class LabelMaker {
     
     private String makeLabelFromRdfValue(Resource resource) {
 
-        String label = null;
+//        String label = null;
+//        
+//        String value = 
+//                makeLabelFromDatatypeProperty(resource, LabelProperty.value);
+//        
+//        if (value != null) {
+//            label = value;
+//            Resource type = resource.getPropertyResourceValue(RDF.type);
+//            if (type != null) {               
+//                String typeLocalName = type.getLocalName().replaceAll(
+//                        "([a-z])([A-Z])", "$1 $2");
+//                label = label + " (" + typeLocalName + ")";
+//            }           
+//        }
+//                
+//        return label;        
         
-        String value = 
-                makeLabelFromDatatypeProperty(resource, LabelProperty.value);
-        
-        if (value != null) {
-            label = value;
-            Resource type = resource.getPropertyResourceValue(RDF.type);
-            if (type != null) {               
-                String typeLocalName = type.getLocalName().replaceAll(
-                        "([a-z])([A-Z])", "$1 $2");
-                label = label + " (" + typeLocalName + ")";
-            }           
-        }
-                
-        return label;        
+        return makeLabelFromDatatypeProperty(resource, LabelProperty.value);
     }
 
 }
