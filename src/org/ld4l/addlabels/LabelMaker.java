@@ -164,8 +164,7 @@ public class LabelMaker {
 
     @SuppressWarnings("unused")
     private String makeAuthorityLabel(Resource resource) {
-       return makeLabelFromDatatypeProperty(
-               resource, LabelProperty.authLabel) + " (Authority)";
+        return makeLabelFromDatatypeProperty(resource, LabelProperty.authLabel);
     }
 
     @SuppressWarnings("unused")
