@@ -25,6 +25,7 @@ public class Labeller {
     private String input;
     private String outputDir;
     private LabelMaker labelMaker;
+    private LabelModifier labelModifier;
 
     
     public Labeller(String input, String outputDir) {
@@ -32,10 +33,11 @@ public class Labeller {
         this.input = input;
         this.outputDir = outputDir;
         this.labelMaker = new LabelMaker();
+        this.labelModifier = new LabelModifier();
         
     }
     
-    public void addLabels() {
+    public void getLabels() {
         
         File inp = new File(input);
         File[] inputFiles;
@@ -57,23 +59,24 @@ public class Labeller {
     private void addLabelsToFile(File file) {
 
         Model model = readModelFromFile(file.toString());        
-        Model labels = getLabels(model);
-        // LOGGER.debug(labels);
-        model = model.add(labels);
+        Model newModel = getLabels(model);
   
         String basename = FilenameUtils.getBaseName(file.toString());
-        writeModelToFile(model, basename);
+        writeModelToFile(newModel, basename);
              
     }
     
     private Model getLabels(Model model) {
  
         Model assertions = ModelFactory.createDefaultModel();
+        Model retractions = ModelFactory.createDefaultModel();
         
         ResIterator subjects = model.listSubjects();
 
         int subjectCount = 0;
         int existingLabel = 0;
+        int modifiedLabel = 0;
+        int newLabel = 0;
         int noLabelMade = 0;
         
         while (subjects.hasNext()) {
@@ -83,28 +86,41 @@ public class Labeller {
             LOGGER.debug("Got subject " + subjectUri);
             
             Statement labelStmt = subject.getProperty(RDFS.label);
-            
+
             // If the resource doesn't already have a label
             if (labelStmt == null) {
                 LOGGER.debug("Getting label for subject " + subjectUri);
                 String label = labelMaker.makeLabel(subject);
                 if (label != null) {
                     assertions.add(subject, RDFS.label, label);    
+                    newLabel++;
                 } else {
                     noLabelMade++;
                 }
             } else {
                 LOGGER.debug("Subject " + subjectUri + " already has label \"" 
                         + labelStmt.getString() + "\"");
-                existingLabel++;
+                String originalLabel = labelStmt.getString();
+                String label = 
+                        labelModifier.modifyLabel(subject, originalLabel);
+                if (! label.equals(originalLabel)) {
+                    assertions.add(subject, RDFS.label, label);
+                    retractions.add(labelStmt);
+                    modifiedLabel++;
+                } else {
+                    existingLabel++;
+                }
             }            
         }  
         
-        LOGGER.info("Processed " + subjectCount + " distinct resources.");
-        LOGGER.info("Found " + existingLabel + " resources with existing labels.");
-        LOGGER.info("Made " + assertions.size() + " new labels.");
+        LOGGER.info("Processed " + subjectCount + " distinct resources."); 
+        LOGGER.info("Retained existing labels for " + existingLabel + " resources.");
+        LOGGER.info("Modified existing labels for " + modifiedLabel + " resources");
+        LOGGER.info("Made new labels for " + newLabel + " resources.");
         LOGGER.info("No label created for " + noLabelMade + " resources.");
-        return assertions;
+        
+        return model.remove(retractions)
+                    .add(assertions);
     }
 
 

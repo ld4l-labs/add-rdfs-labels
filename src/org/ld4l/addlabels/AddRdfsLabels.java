@@ -57,7 +57,7 @@ public class AddRdfsLabels {
         LOGGER.info("Output directory path: " + absOutputDir);
         
         Labeller labeller = new Labeller(absInputPath, absOutputDir); 
-        labeller.addLabels();  
+        labeller.getLabels();  
         LOGGER.info("Done!");
    
     }
