@@ -25,7 +25,7 @@ public class Labeller {
     private String input;
     private String outputDir;
     private LabelMaker labelMaker;
-    private LabelModifier labelModifier;
+    // private LabelModifier labelModifier;
 
     
     public Labeller(String input, String outputDir) {
@@ -33,7 +33,7 @@ public class Labeller {
         this.input = input;
         this.outputDir = outputDir;
         this.labelMaker = new LabelMaker();
-        this.labelModifier = new LabelModifier();
+        // this.labelModifier = new LabelModifier();
         
     }
     
@@ -75,7 +75,7 @@ public class Labeller {
 
         int subjectCount = 0;
         int existingLabel = 0;
-        int modifiedLabel = 0;
+        // int modifiedLabel = 0;
         int newLabel = 0;
         int noLabelMade = 0;
         
@@ -100,27 +100,28 @@ public class Labeller {
             } else {
                 LOGGER.debug("Subject " + subjectUri + " already has label \"" 
                         + labelStmt.getString() + "\"");
-                String originalLabel = labelStmt.getString();
-                String label = 
-                        labelModifier.modifyLabel(subject, originalLabel);
-                if (! label.equals(originalLabel)) {
-                    assertions.add(subject, RDFS.label, label);
-                    retractions.add(labelStmt);
-                    modifiedLabel++;
-                } else {
-                    existingLabel++;
-                }
-            }            
+//                String originalLabel = labelStmt.getString();
+//                String label = 
+//                        labelModifier.modifyLabel(subject, originalLabel);
+//                if (! label.equals(originalLabel)) {
+//                    assertions.add(subject, RDFS.label, label);
+//                    retractions.add(labelStmt);
+//                    modifiedLabel++;
+//                } else {
+                existingLabel++;
+            }       
         }  
         
         LOGGER.info("Processed " + subjectCount + " distinct resources."); 
         LOGGER.info("Retained existing labels for " + existingLabel + " resources.");
-        LOGGER.info("Modified existing labels for " + modifiedLabel + " resources");
+        // LOGGER.info("Modified existing labels for " + modifiedLabel + " resources");
         LOGGER.info("Made new labels for " + newLabel + " resources.");
         LOGGER.info("No label created for " + noLabelMade + " resources.");
         
-        return model.remove(retractions)
-                    .add(assertions);
+//        return model.remove(retractions)
+//                    .add(assertions);
+        
+        return model.add(assertions);
     }
 
 
@@ -140,7 +141,7 @@ public class Labeller {
     
     private Model readModelFromFile(String filename) {
         
-        //return RDFDataMgr.loadModel(filename);
+        // return RDFDataMgr.loadModel(filename);
         // LOGGER.debug("Reading file " + filename);
         
         Model model = ModelFactory.createDefaultModel(); 
