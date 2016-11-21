@@ -5,6 +5,7 @@ This project may be of interest to LD4P groups wishing to ingest data into Vitro
 
 Uses LD4L-O v1. Needs to be adapted to LD4L-O v2 recommendations. 
 
-Usage:
+Options:
 
--i /path/to/input/data/directory/ -o /path/to/output/directory
+-i /path/to/input/data/directory/ 
+-o /path/to/output/directory
