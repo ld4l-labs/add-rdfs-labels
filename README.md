@@ -7,5 +7,5 @@ Uses LD4L-O v1. Needs to be adapted to LD4L-O v2 recommendations.
 
 Options:
 
--i /path/to/input/data/directory/   
+-i /path/to/input/data/directory   
 -o /path/to/output/directory
